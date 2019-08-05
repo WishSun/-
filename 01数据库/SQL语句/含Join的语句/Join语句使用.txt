@@ -1,0 +1,96 @@
+
+使用例子来讲解各种Join：
+
+	假设我们有下面两张表。表A在左边，表B在右边，我们给它们各四条记录
+	id     name                 id     name
+	--     ----                 --     ----
+	1      Priate               1      Rutabaga
+	2      Monkey               2      Pirate
+	3      Ninja                3      Darth Vader
+	4      Spaghetti            4      Ninja 
+	
+	(1)内联和( inner join )
+	select * from TableA
+	inner join TableB on TableA.name = TableB.name 
+	
+	执行结果：
+	id    name       id    name
+	--    ----       --    ----
+	1     Priate     2     Priate 
+	3     Ninja      4     Ninja 
+	内联和( inner join )只生成同时匹配表A和表B的记录集，即表A和表B在某些条件下的交集
+	
+	
+	(2)全外联合( full outer join )
+	select * from TableA
+	full outer join TableB on TableA.name = TableB.name 
+	
+	
+	执行结果： 
+	id    name       id    name 
+	--    ----       --    ----
+	1     Priate     2     Priate
+	2     Monkey     null  null 
+	3     Ninja      4     Ninja
+	4     Spaghetti  null  null 
+	null  null       1     Rutabaga 
+	null  null       3     Darth Vader
+	全外联合( full outer join )生成表A和表B里的记录全集，包括两边都匹配的记录。如
+	果有一边没有匹配的，缺失的这一边为null，即是TableA和TableB的并集：两边的每个
+	元组都会在结果集中出现，name相同的在结果集的同一行，没有相同name匹配的元组，则
+	单独为一行，该行中本应匹配另一个表的数据用null代替。
+	
+	
+	(3)左外连接( left outer join )
+	select * from TableA
+	left outer join TableB on TableA.name = TableB.name 
+	
+	id      name        id      name
+	1       Priate      2       Priate
+	2       Monkey      null    null 
+	3       Ninja       4       Ninja
+	4       Spaghetti   null    null 
+	左外联合( left outer join )生成表A的所有记录，包括在表B里匹配的记录。如果没有
+	匹配的，右边将是null。 即是(TableA) U (TableA n TableB) : 表A和(表A与表B的交集)
+    的并集。
+    
+	左外联合，然后用where语句剔除我们不需要的记录：
+	select * from TableA
+	left outer join TableB on TableA.name = TableB.name  
+	where TableB.id is null 
+	
+	执行结果：
+	id     name         id      name 
+	2      Monkey       null    null 
+	4      Spaghetti    null    null 
+	即生成只在表A里而不在表B里的记录集。
+	
+	
+	全外联合，然后用where语句剔除两边都不想要的记录：
+	select * from TableA
+	full outer join TableB on TableA.name = TableB.name 
+	where TableA.id is null or TableB.id is null 
+	
+	执行结果：
+	id     name         id      name 
+	2      Monkey       null    null 
+	4      Spaghetti    null    null
+	null   null         1       Rutabaga
+	null   null         3       Darth Vader
+	即生成对于表A和表B都是唯一的记录集。
+	
+	
+	(5)右外连接( right join )和左外连接类似！
+	
+	
+    (4)交叉联合( cross join )
+    还有一种笛卡尔积或者交叉联合( cross join )
+    select * from TableA
+    cross join TableB 
+    这个把"表A所有"联接到"表B所有", 产生 4*4=16行，远多于原始的集合，很明显，学过
+    数学的我们都知道这种联合遇上大型的表很危险。 	
+	
+	
+	
+	
+	
