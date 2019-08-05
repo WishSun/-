@@ -1,0 +1,63 @@
+Go单元测试压力测试
+   
+    压力测试用来检测函数(方法)的性能，和编写单元功能测试的方法类似，需要注意以下几点：
+	(1). 压力测试用例必须遵循如下格式：
+		 func BenchmarkXxx(b *testing.B){
+			...
+		 }
+		 其中Xxx可以是任意字母数字的组合，但是首字符必须是大写字母
+	
+	(2). go test 不会默认执行压力测试的函数，如果要执行压力测试需要带上参数
+	
+	(3). 进行所有go文件的压力测试执行命令为：
+	     go test -bench=".*"
+		
+    (4). 对某个go文件进行压力测试执行命令为：
+	     go test 文件名 -bench=".*"
+		 
+	(5). 在压力测试用例中，记得在循环体内使用 testing .B .N，以使测试可以正常运行
+	
+	
+    示例：
+	//gotest.go 
+	package gotest 
+	import(
+		"errors"
+	)
+	
+	func Division(a, b float64)(float64, errors){
+		if b == 0{
+			return 0, errors.New("除数不能为0")
+		}
+		return a / b, nil
+	}
+	
+	//压力测试文件gotest_test.go 
+	package gotest
+	
+	import(
+		"testing"
+	)
+	
+	func BenchmarkDivision(b *testing.B){
+		for i := 0; i < b.N; i++{
+			Division(4, 5)
+		}
+	}
+	
+	func BenchmarkTimeConsumingFunction(b *testing.B){
+		//调用该函数停止压力测试的时间计数
+		b.StopTimer()
+		
+		/*
+		  ... ...
+			  做一些初始化的工作，例如读取文件数据，数据库连接等等，
+		  这样这些时间不影响测试函数本身的性能
+		*/
+		
+		//重新开始时间
+		b.StartTimer()
+		for i := 0; i < b.N; i++ {
+			Division(4, 5)
+		}
+	}

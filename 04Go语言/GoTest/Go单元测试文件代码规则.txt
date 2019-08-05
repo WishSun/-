@@ -1,0 +1,31 @@
+Golang单元测试对文件名和方法名，参数都有很严格的要求。
+
+   文件代码规则：
+   1. 文件名必须是_test.go结尾的，这样在执行go test的时候才会执行到相应的代码
+   
+   2. 必须 import testing这个包
+   
+   3. 所有测试用例函数必须是 Test[^a-z]开头
+   
+   4. 测试用例会按照源代码中写的顺序依次执行
+   
+   5. 测试函数TestXxx()的参数是 t *testing.T, 我们可以使用该类型来记录错误或者是测试状态
+ 
+   6. 测试格式：func TestXxx(t *testing.T), Xxx部分可以为任意的字母数字的组合，
+      但是首字母不能是小写字母[a-z]，例如Testintdiv是错误的测试函数名
+	  
+   7. 函数中通过调用testing.T的Error，Errorf，FailNow，Fatal，Fatallf方法，说
+      明测试不通过，调用Log方法用来记录测试的信息。
+	  
+	  
+测试命令go test使用说明：
+    通过go help test可以看到go test的使用说明。
+	
+	常用go test命令：
+    1. 跑单个测试case示例：
+	   go -race -run 测试函数名
+	   
+	   注：-race 帮忙检测竞态
+	       -run  后面跟上UT例面的Test开头的函数名，会只跑该测试里面的用例，否则，默认全部执行
+		   
+	

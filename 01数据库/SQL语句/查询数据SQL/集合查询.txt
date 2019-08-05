@@ -1,0 +1,30 @@
+1. 集合查询
+       select语句的查询结果是元组的集合，所以多个select语句的结果可进行集合操作。集合操作主要
+   包括并操作UNION、交操作INTERSECT和差操作EXCEPT。
+   注意：
+       参加集合操作的各查询结果的列数必须相同；对应项的数据类型也必须相同。
+	   
+   例1：
+     /* 查询计算机科学系的学生及年龄不大于19岁的学生*/
+	 select * from student where sdept='CS'
+	 UNION
+	 select * from student where sage<=19;
+	 本查询实际上是求计算机科学系的所有学生与年龄不大于19岁学生的并集。使用UNION
+	 将多个查询结果合并起来时，系统会自动去掉重复元组。如果要保留重复元组则用UNION ALL操作符
+	 
+   例2：
+     /* 查询计算机科学系的学生与年龄不大于19岁的学生的交集*/
+	 select * from student where sdept='CS'
+	 INTERSECT
+	 select * from student where sage<=19;
+	 实际上就是查询计算机科学系中年龄不大于19岁的学生
+	 select * from student
+	 where sdept='CS' and sage<=19;
+   例3：
+     /* 查询计算机科学系的学生与年龄不大于19岁的学生的差集*/
+	 select * from student where sdept='CS'
+	 EXCEPT
+	 select * from student where sage <= 19;
+	 也就是查询计算机科学系中年龄大于19岁的学生。
+	 select * from student
+	 where sdept='CS' and sage>19;

@@ -1,0 +1,31 @@
+1. Insert语句
+   Insert语句的功能是将新元组插入指定表中，其通用格式如下：
+     insert into 表名 [(属性列1, 属性列2,...)]
+     values(常量1, 常量2,...);
+   注意：
+     (1). 其中新元组的属性列1的值为常量1，属性列2的值为常量2，...	 
+	 (2). into子句中没有出现的属性列，新元组在这些列上将取空值，但必须注意的是，在表定义时
+	      说明了 not null 的属性列不能取空值，否则会出错。
+	 (3). 如果into子句中没有指明任何属性列名，则新插入的元组必须在每个属性列上均有值。而且
+	      属性列的次序与创建表时的次序相同。
+	 (4). 在into子句中指出了新增加的元组在哪些属性上要赋值，属性的顺序可以与创建表时的顺序
+	      不一样。 例如：
+		  insert into student(sno, sname, ssex, sdept, sage)
+		  values('201215128', '陈冬', '男', 'IS', 18);
+		  values子句对新元组的各属性赋值，字符串常数要用英文单引号括起来！
+		  
+2. 插入子查询结果
+   子查询不仅可以嵌套在select语句中用以构造父查询的条件，也可以嵌套在insert语句中用以生成
+   要插入的批量数据。
+   例如：
+     /* 对每一个系，求学生的平均年龄，并把结果存入数据库*/
+	 /* 创建一个新表*/
+	 create table dept_age(
+	   sdept char(15),
+	   ava_age smallint
+	   );
+	 /* 插入数据*/
+	 insert into dept_age(sdept, ava_age)
+	 select sdept, AVG(sage)                // 子查询 
+	 from student
+	 group by sdept;

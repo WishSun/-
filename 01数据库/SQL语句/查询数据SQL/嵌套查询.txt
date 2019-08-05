@@ -1,0 +1,78 @@
+1. 嵌套查询：
+   在SQL语言中，一个SELECT-FROM-WHERE语句称为一个查询块。将一个查询块嵌套在
+   另一个查询块的WHERE子句或HAVING短语的条件中的查询称为"嵌套查询(nested q-
+   uery)"
+   例1：
+   /* 查询所有选择了课程编号为2的学生的姓名*/
+   select sname                 // 外层查询或父查询
+   from student
+   where sno in
+             (select sno        // 内层查询或子查询
+			  from sc
+			  where cno='2');
+   注意：
+       (1). SQL语言允许多层嵌套查询，但是子查询的select语句中不能使用order by
+	        子句，order by子句只能对最终查询结果排序
+			
+2. 相关子查询和不相关子查询
+   子查询的查询条件不依赖于父查询，这类子查询称为不相关子查询，例1即为不相关子查询；
+   子查询的查询条件依赖于父查询，这类子查询称为相关子查询；
+   例2：(相关子查询)
+   /* 找出每个学生超过他自己选修课程平均成绩的课程号*/
+   select sno, cno
+   from sc x
+   where grade >= ( select AVG(grade)   // 子查询:某学生的平均成绩
+                    from sc y
+					where y.sno=x.sno);
+	该查询语句的执行过程为：
+	 (1). 从外层查询中取出sc的一个元组x，将元组x的sno值(201215121)传送给内层查询。
+	      select AVG(grade)
+		  from sc y
+		  where y.sno='201215121';
+	 (2). 执行内层查询，假设得到值88，用该值代替内层查询，得到外层查询：
+	      select sno,cno
+		  from sc x
+		  where grade >= 88;
+	 (3). 执行这个查询，得到可能数据：
+	      (201215121, 1)
+		  (201215121, 3)
+		  其他的学号以此类推，执行相同的过程。
+		  
+3. 带有ANY(SOME)或ALL谓词的子查询
+   子查询返回单值时可以用比较运算符，但返回多值时要用这些谓词：
+   ANY(SOME)：表示结果集中的某个值
+   ALL：表示结果中的所有值
+
+   语义如下：
+      >ANY     : 大于子查询结果中的某个值
+      <ALL     : 小于子查询结果中的所有值
+      =ALL     : 等于子查询结果中的所有值
+      !=ANY    : 不等于子查询结果中的某个值
+       ... ...
+   例如：
+     /* 查询非计算机科学系中比计算机科学系任意一个学生年龄小的学生姓名和年龄*/
+     select sname, sage
+     from student
+     where sdept!='CS' and sage < ALL(select sage
+                                      from student
+                                      where sdept='CS')
+
+4. 带有EXISTS谓词的子查询
+   例如：
+     /* 查询所有选修了1号课程的学生姓名*/
+     select sname
+     from student
+     where EXISTS
+           (select *
+            from sc
+            where sno=student.sno and cno='1');
+   注意： 
+     (1). 使用存在量词EXISTS后，若内层查询结果为非空，则外层的where子句返回真，否则返回假
+     (2). 由EXISTS引出的子查询，其目标列表达式通常都用 *，因为带EXISTS的子查询只返回真和假，
+          给出列名无意义
+     (3). 这个相关子查询的处理过程是：
+          首先取外层查询中student表的第一个元组，根据它与内层查询相关的属性值(sno值)处理内
+          层查询，若where子句返回值为真，则取外层查询中该元组的sname放入结果表；然后再取student
+          表的下一个元组；重复这一过程，直至外层student表全部检查完为止。
+   
+   与EXISTS对应的还有NOT EXISTS，使用方式类似！		  

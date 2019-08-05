@@ -1,0 +1,20 @@
+1. Delete语句
+   一般格式为:
+    delete from 表名
+	where 条件;
+   注意：
+     (1). delete语句的功能是从指定表中删除所有满足where子句条件的元组，表的定义仍存在于
+	      数据字典中。
+	 (2). 删除表定义用的是drop语句
+   例：
+     /* 删除学号为201215128的学生记录*/
+	 delete from student
+	 where sno='201215128';
+	 
+2. 带子查询的删除语句
+   例:
+     /* 删除计算机科学系所有学生的选课记录*/
+	 delete from sc
+	 where sno in (
+	     select sno from student
+		 where sdept='CS');

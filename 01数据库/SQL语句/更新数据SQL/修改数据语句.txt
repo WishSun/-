@@ -1,0 +1,23 @@
+1. Update语句
+   Update语句的功能是修改指定表中满足where子句条件的元组，通用格式为：
+     update 表名
+	 set 列名=表达式, 列名=表达式
+	 where 条件;
+   注意：
+     其中set子句给出<表达式>的值用于取代相应的属性列值，如果省略where子句，则表示要修改
+	 表中的所有元组。
+	 
+   例：
+     /* 将学生201215121的年龄改为22岁*/
+	 update student
+	 set sage=22
+	 where sno='201215121';
+	 
+2. 带子查询的修改语句
+   例：
+     /*将计算机科学系全体学生的成绩置0*/
+	 update sc
+	 set grade=0
+	 where sno in (
+	     select sno from student
+		 where sdept='CS');

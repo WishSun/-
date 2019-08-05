@@ -1,0 +1,67 @@
+测试覆盖率
+
+    通过测试覆盖率，可以知道单元测试覆盖了多少代码，代码测试的覆盖率分很多种，
+语句覆盖/条件覆盖等等。在go语言的测试覆盖率统计时，go test通过参数covermode的
+设定可以对覆盖率统计模式作如下三种设定：
+    
+	(1). set模式：缺省模式，只记录语句是否被执行过
+	
+	(2). count模式：记录语句被执行的次数
+	
+	(3). atomic模式：记录语句被执行的次数，并保证在并发执行时的正确性
+	
+
+    示例：
+	//gotest.go文件
+	package gotest
+	
+	import "errors"
+	
+	func GetGrade(score int) string{
+		switch {
+		case score < 60:
+			return "E"
+		case score <= 70:
+			return "D"
+		case score <= 80:
+			return "C"
+		case score <= 90:
+			return "B"
+		case score <= 100:
+			return "A"
+		default:
+			return "Undefined"
+		}
+	}
+	
+	
+	// gotest_test.go文件
+	package gotest
+	
+	import "testing"
+	
+	func TestGetGrade(t *testing.T){
+		if grade := GetGrade(65); grade != "D"{
+			t.Error("成绩等级划分函数测试未通过")
+		}else{
+			t.Log("成绩等级测试通过了")
+		}
+	}
+	
+	执行命令 go test -cover, 输出如下信息
+	   PASS
+	   coverage：36.4% of statements
+	   ok      test/gotest     0.046s
+	
+	   可以看到现在得到了一个36.4%的覆盖率，这说明36.4%的代码在测试用例中被至少
+	执行过一次。但是想确认那些语句没有被执行的时候，需要使用go test命令生成html
+	文件用以显示测试覆盖率情况。
+	
+	   生成HTML前的准备，先生成中间文件，执行命令：
+	       go test -coverprofile=covprofile
+		   生成中间文件covprofile
+	  
+	   再执行命令：
+	       go tool cover-html=covprofile -o coverage.html 
+           生成coverage.html文件，可用浏览器打开，可以很清楚地看到测试用例覆盖
+       到的代码和未曾覆盖的代码。		   

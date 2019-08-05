@@ -1,0 +1,10 @@
+1. 基于派生表的查询
+   子查询不仅可以出现在where子句中，还可以出现在from子句中，这时子查询生成的
+   临时派生表(derived table)成为主查询的查询对象。
+   
+   例1：
+      /* 找出每个学生超过他自己选修课平均成绩的课程号*/
+	  select sno, cno
+	  from sc, (select sno, AVG(grade) from sc group by sno) as Avg_sc(avg_sno,avg_grade)
+	  where sc.sno=Avg_sc.avg_sno and sc.grade>=Avg_sc.avg_grade;
+	  这里的from子句中的子查询将生成一个派生表Avg_sc。该表由avg_sno和avg_grade两个属性组成。
