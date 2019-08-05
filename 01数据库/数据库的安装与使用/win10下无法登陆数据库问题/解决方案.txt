@@ -1,0 +1,69 @@
+1. 问题：
+   mysql第一次安装后，并没有提示设置密码选项直接安装成功，但却无法免密登陆，怎么初始化密码呢？
+   
+   安装：
+      (1). 进入mysql的bin目录
+		   cd bin
+	  (2). 执行安装命令
+	       mysqld install
+	  (3). 执行初始化
+	       mysqld --initialize
+	  (4). 启动服务
+	       net start mysql 
+		   
+   以root形式进入MySQL，输密码和不输入密码都会出错：
+       C:\Users\sunxiwang5>mysql -u root -p
+	   Enter password:
+	   ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)
+
+	   C:\Users\sunxiwang5>mysql -u root -p
+	   Enter password: ******
+	   ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)
+
+	   
+2. 解决方法：
+       出现问题的原因是，第一次用root登陆也是需要密码的，但是root密码是多少我们不知道，
+	   所以为了解决这个问题，我们需要换一种登陆方式，即:
+	      -skip-grant-tables
+		  
+	   (1). 在mysql的bin目录下创建文件my.ini:
+            [client]
+			port=3306
+			default-character-set=utf8
+
+			[mysqld] 
+			# 设置为自己MYSQL的安装目录 
+			basedir=C:\Program Files\MySQL\MySQL Server 5.7
+			# 设置为MYSQL的数据目录 
+			datadir=C:\Program Files (x86)\MySQL\MySQL Server 5.7\data
+			port=3306
+			character_set_server=utf8
+			sql_mode=NO_ENGINE_SUBSTITUTION,NO_AUTO_CREATE_USER
+			#开启查询缓存
+			explicit_defaults_for_timestamp=true
+			#免密登录
+			skip-grant-tables
+	   
+	   (2). 打开windows系统服务，找到mysql服务，停止mysql服务
+	   
+	   (3). 在mysql的bin目录下执行命令：
+	            mysqld.exe --defaults-file="C:\Program Files (x86)\MySQL\MySQL Server 5.7\bin\my.ini" --console --skip-grant-tables
+	        该命令可以跳过授权模式。
+			此时，我们需要管理员方式打开另一个cmd窗口，因为刚才那个窗口一直运行着，不要打扰他。
+			
+	   (4). 然后输入mysql启动指令，就能够成功进入了！
+	   
+	   (5). 当然，我们仅仅是本次进入了mysql，为了今后能不用通过-skip-grant-tables的方式进入，需要
+	        重新配置root密码。 请依次执行下面命令：
+			   use mysql;
+			   update user set authentication_string=password("newpassword") where user="root";
+			   flush privileges;
+			   
+	   (6). 然后quit命令退出数据库，然后再次登陆就可以用(5)步骤设置的命令登陆了。
+	        然而，这次又出现了另一个问题，在mysql命令行里，执行任何命令都出现错误：
+			    ERROR 1820 (HY000): You must reset your password using ALTER USER statement before executing this statement.
+		    解决方法：
+                执行命令：alter user user() identified by "xiwang1997"; //密码变更为xiwnag1997
+            然后就一切正常了！				
+		
+			 

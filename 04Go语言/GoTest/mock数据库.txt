@@ -1,0 +1,63 @@
+1. 首先包含两个库
+   "github.com/DATA-DOG/go-sqlmock"
+   "testing"
+   
+2. 创建测试函数体
+   func TestXxx(t *testing.T){
+       // 创建db对象和mock对象
+	   db, mock, err := sqlmock.New()
+	   if err != nil{
+	      t.Fatalf("错误信息:%s", err)
+	   }
+	   defer db.Close()   // 函数执行完毕后关闭db
+	   
+	   // 准备一个待测试对象
+	   xxxDao := &XxxDao{}
+	   
+	   // 插入一些假数据
+	   rows := sqlmock.NewRows([]string{"`sno`", "`sname`", "`sage`", "`sdept`"}).
+	      AddRow("41509050116", "xiaoming", "18", "CS").
+          AddRow("41509050117", "xiaoli", "19", "CS").
+          AddRow("41509050118", "xiaoma", "18", "IS").
+          AddRow("41509050119", "xiaosun", "20", "CS")
+		  
+	   // 设置某个查询语句将能查到这些数据
+	   mock.ExpectQuery(selectSql).
+	       WithArgs(18, "CS").       // 这里传入期待参数，WithArgs后面会将其对数据库实际查询参数相匹配，
+		                             // 如果有些参数不方便在此传入，则可以使用sqlmock.AnyArg()来进行匹配，它可以匹配任意类型的参数
+		   WillReturnRows(rows)      // 在这里可以设置期待返回的数据
+		                             // 如果期待返回错误，则可以 .WillReturnError(errors.New("错误信息"))
+		   
+	   // 创建过滤条件
+	   filter := map[string]interface{}{
+	        "sage" : 18,
+			"sdept": "CS",
+	   }
+	   
+	   // 执行待测试函数
+	   elems, err := xxxDao.List(db, filter, ...)
+	   if err != nil{
+	       t.Errorf("打印错误信息")
+	   }
+	   
+	   // 打印中间信息(假数据行和执行待测试函数查到的数据行)
+	   fmt.Printf("%v\n", rows)
+	   fmt.Printf("%+v\n", elems)
+	   
+	   // 检查查询结果正确性
+	   if elems != nil{
+	       for i:= 0; i < len(elems); i++{
+		      fmt.Println(i, elems[i].sage)
+		      fmt.Println(i, elems[i].sdept)
+			  if elems[i].sage != 18 || elems[i].sdept != "CS" {
+			      t.Errorf("打印错误提示信息")
+			  }
+		   }
+	   }
+	   
+	   // 检查是否按顺序满足期待元组，如果未满足，返回错误
+	   if err := mock.ExpectationsWereMet(); err != nil{
+	       t.Errorf("打印错误信息")
+	   }
+          		  
+   }

@@ -1,0 +1,30 @@
+# 设置全局用户名和邮箱地址
+- git config --global user.name "sunxiwang"
+- git config --global user.email "sunxiwang5@jd.com"
+
+# 获取本机ssh公钥
+- ssh-keygen -t rsa -b 4096 -C "sunxiwang5@jd.com"
+- cat ~/.ssh/id_rsa.pub
+- 然后将该公钥内容拷贝到个人gitlab的ssh中即可
+
+# 删除远程仓库信息
+git remote remove origin
+
+# 添加新的远程仓库的信息
+git remote add origin git@git.jd.com:sunxiwang3/sunxiwang-study.git 
+- 如果是直接是从远程地址克隆下来的将自动绑定了远程仓库地址
+  git clone git@git.jd.com:sunxiwang3/sunxiwang-study.git
+
+# 查看远程仓库的信息
+git remote -v
+origin	git@git.jd.com:sunxiwang3/sunxiwang-study.git (fetch)
+origin	git@git.jd.com:sunxiwang3/sunxiwang-study.git (push)
+
+
+# 第一次推送到远程仓库
+git push -u origin master
+
+后面就可以
+git push(默认使用第一次那个)
+
+
