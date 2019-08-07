@@ -11,6 +11,13 @@
 	   flush privileges;
 	   
 	3. 使用命令 netstat -nltp 查看虚拟机上23端口和3306端口是否被监听
-	   如果3306没有被监听，说明mysql服务没开；
-	   如果23端口没有被监听，说明telnet服务没开；
-	   安装telnet命令： yum install telnet
+	       (1).如果3306没有被监听，说明mysql服务没开；
+		   (2).如果23端口没有被监听，说明telnet服务没开；
+		        使用命令查看telnet是否被安装：
+				    rpm -qa | grep telnet-server
+				如未安装，则安装telnet服务端，命令为：
+     				yum install telnet-server -y
+				安装telnet客户端命令： yum install telnet
+				
+				
+	
