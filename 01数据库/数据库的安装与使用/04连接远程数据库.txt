@@ -1,0 +1,16 @@
+远程连接数据库：
+
+    1. 在远程数据库上配置权限：
+	
+	   grant all privileges on cc.* to sunxiwang@'%' identified by '123456';
+	      数据库"cc"的所有表对任意IP地址的用户"sunxiwang"开放所有权限，登陆密码是"123456"，
+	   '%'是指任意IP地址，也可以在此指定IP地址
+	   
+	2. 刷新权限
+	  
+	   flush privileges;
+	   
+	3. 使用命令 netstat -nltp 查看虚拟机上23端口和3306端口是否被监听
+	   如果3306没有被监听，说明mysql服务没开；
+	   如果23端口没有被监听，说明telnet服务没开；
+	   安装telnet命令： yum install telnet

@@ -1,0 +1,104 @@
+	centos下telnet安装使用教程
+	https://blog.csdn.net/typa01_kk/article/details/46604967
+	
+	1. 检查是否安装telnet
+	   rpm  -qa | grep telnet
+	   
+	2. 进行安装
+		  安装客户端： yum -y install telnet
+		  安装服务端： yum -y install telnet-server
+		  
+	      如果暗中telnet-server服务启动以来xinetd服务，xinetd超级服务为管理各个服务，未安装
+	   的话，需要首先安装
+	      
+		  xinetd：eXtended InterNET services daemon，超级Internet服务器，常用来管理多种轻量级
+	   Internet服务。
+	   
+	3. 查看是否安装(若安装则不安装)
+	   rpm -qa | grep xinetd 
+	   
+	4. 安装xinetd服务
+	   yum -y install xinetd 
+	   
+	5. telnet服务之后，默认是不开启服务，修改文件/etc/xinetd.d/telnet来开启服务：
+	   如果有该文件则修改，若文件不存在，可自己vim创建修改：
+	   修改 disable = yes为disable = no
+	   文件内容：
+	       
+		# default: yes
+		# description: The telnet server servestelnet sessions; it uses \
+		#      unencrypted username/password pairs for authentication.
+		service telnet
+		{
+			flags           = REUSE
+			socket_type     = stream
+			wait            = no
+			user            = root
+			server          =/usr/sbin/in.telnetd
+			log_on_failure  += USERID
+			disable         = no 
+		}
+		
+    6. 安装后检查
+	     rpm -qa | grep telnet 
+		 rpm -qa | grep xinetd
+		 
+	7. 启动telnet和依赖的xinetd服务：
+	    systemctl restart xinetd.service 或
+		/bin/systemctl restart xinetd.service 
+		
+	8. 查看启动
+	    ps -ef | grep xinetd 
+		
+    9. 设置服务开机启动：
+	   chkconfig --level 35 xinetd on
+	   systemctl enable xinetd.service
+	   
+	10. 查看 
+	   chkconfig --list
+	   
+	   
+	问题1： 
+	     telnet下root登陆，密码正确，总提示：Login incorrect
+	解决1：
+	     注释 /etc/pam.d/remote的第一行，即
+		   #auth required pam_securetty.so 
+		   
+	问题2：
+	     其他机器远程telnet的时候，登陆不成功，可能是防火墙的问题，修改防火墙设置：
+		 注： netstat -tunlp查看是否23端口被防火墙封掉。
+		 
+		 再使用iptables修改设置，使用service iptables save保存设置，然后service iptables restart重启防火墙：
+		    iptables  -I  INPUT -p tcp --dport  23 -jACCEPT
+			iptables  -I  INPUT -p udp --dport  23 -jACCEPT
+			service  iptables  save 
+			service  iptables  restart
+		 查看防火墙状态
+		    firewall-cmd --state
+		 停止firewall
+		    systemctl stop firewalld.service 
+		 禁止firewall开机启动
+		    systemctl disable firewalld.service 
+			
+	疑问3：
+	     telnet登陆主机后会提示Escape character is '^]':
+		 点击提示的意思是按 ctrl + ] 会呼出telnet的命令行，就可以执行telnet命令：
+		 
+		 close : 关闭当前连接
+		 logout ：强制退出远程用户并关闭连接
+		 display ：显示当前操作的参数
+		 mode ：试图进入命令行方式或字符方式
+		 open ：连接到某一站点
+		 quit ：退出
+		 telnetsend ：发送特殊字符
+		 set ：设置当前操作的参数
+		 unset ：复位当前操作参数
+		 status ：打印状态信息
+		 toggle ：对操作参数进行开关转换
+		 slc ：改变特殊字符的状态
+		 auth ：打开/关闭确认功能z挂起
+		 telnetenviron ：更改环境变量，显示帮助信息
+		 
+		 
+
+	
