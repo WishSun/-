@@ -1,0 +1,12 @@
+Go单元测试常用命令：
+
+
+    1. 测试单个文件
+	   go test -v 测试文件.go  该测试文件依赖文件.go 
+	   例如：
+	   go test -v hostgroup_test.go  hostgroup.go  port.go 
+	   
+	2. 测试单个函数
+	   go test -v -test.run 单元测试函数名
+	   例如：
+	   go test -v -test.run TestHostgroupDAO_Info
