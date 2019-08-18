@@ -1,0 +1,158 @@
+1. Go单元测试mockery库
+       mockery库可以为Go interface生成一个mocks struct。通过mocks struct，在单元测试
+   中我们可以模拟所有normal cases 和 corner cases，彻底消除细节实现上的bug
+   
+       mocks在测试无状态函数中意义不大，其应用场景主要在于处理不可控的第三方服务、数
+   据库、磁盘读写等。如果这些服务的调用细节已经被封装到interface内部，调用方只看到了
+   interface定义的一组方法，那么在测试中mocks就能控制第三方服务返回任意期望的结果，进
+   而实现对调用方逻辑的全方位测试。
+   
+
+       准备工作：
+	   go get github.com/stretchr/testify 
+	   go get github.com/vektra/mockery
+	   
+2. 使用 testify/require 简化 table driven test(表组测试)
+   首先，我们通过一个简单的例子看下require的用法。我们针对函数Sqrt进行测试：
+   
+       func Sqrt(x float64) float64{
+			if x < 0 {
+				panic("cannot be negative")
+			}
+			
+			if x == 0{
+				return 0
+			}
+			
+			a := x / 2
+			b := (a + 2) / 2
+			erro := a - b 
+			for erro >= 0.000000001 || erro <= -0.000000001 {
+				a = b 
+				b = (b + x/b) / 2
+				erro = a - b 
+			}
+			
+			return b 
+	   }
+	      这里使用一个常规的方法实现 Sqrt，该实现的最大精度是到小数点后9位。我们
+	   首先测试 x < 0导致panic的情况，看 require 如何使用，测试代码如下：
+	   
+	      func TestSqrt_Panic(t *testing.T){
+				defer func(){
+					r := recover()
+					require.Equal(t, "cannot be negative", r)
+				}()
+				
+				_ = Sqrt(-1)
+		  }
+		  在上面的函数中，我们只使用了 require.Equal 一行代码就实现了运行结果校验。
+	   如果使用 testing 来实现的话，变成了三行，并且需要手写一段描述：
+	   
+	      func TestSqrt_Panic(t *testing.T){
+				defer func(){
+					r := recover()
+					if r.(string) != "cannot be negative" {
+						t.Fatalf("期望panic : \"cannot be negative\", 实际得到\"%s 
+						\"\n", r)
+					}
+				}
+				_ = Sqrt(-1)
+		  }
+		  使用require 之后，不仅是测试代码更易于编写，而且能够在测试运行失败时，格式
+	   化结果，方便定位和修改bug。
+	      而这带来的方便，在table driven test中，我们会有更深的体会。
+		  
+		  
+	   Table Driven Test(表组测试)
+		  
+		  我们仍然以 Sqrt 为例，来看如何在 table driven test中使用require。这里我们
+       测试的传入常规参数的情况：		  
+	   
+	      func TestSqrt(t *testing.T){
+				testcases := []struct{
+					desc   string 
+					input  float64
+					export float64
+				}{
+					{
+						desc : "zero",
+						input: 0,
+						expect : 0,
+					},
+					{
+						desc : "one",
+						input: 1,
+						expect : 1,
+					},
+					{
+						desc : "非常小的有理数",
+						input: 0.0000000000000000000000000001,
+						expect : 0.0,
+					},
+					{
+						desc : "普通有理数2.56",
+						input: 2.56,
+						expect : 1.6,
+					},
+					{
+						desc : "应该返回一个无理数",
+						input: 2,
+						expect : 1.414213562,
+					},
+				}
+				
+				for _, ts := range testcases{
+					got := Sqrt(ts.input)
+					erro := got - ts.expect
+					require.True(t, erro < 0.000000001 && erro > -0.000000001, ts.desc)
+				}
+		  }
+		  
+		  上面这个例子，有三点值得注意：
+		      (1). 匿名struct允许我们填充任意类型的字段，非常方便构建测试数据集；
+			  (2). 每个匿名struct都包含一个 desc string 字段，用于描述该测试要处理的状况。
+			       在测试运行失败时，非常有助于定位失败位置；
+			  (3). 使用require 而不是 assert，因为使用 require时，测试失败以后，所有测试
+			       都会停止执行。
+				   
+		  关于require，除了上面提到的 require.True, require.Equal, 还有一个比较实用的方法
+	   是 require.EqualValues, 它的应用场景在于处理Go的强类型问题，我们不妨看一段代码：
+	    
+		  func Test_Require_EqualValues(t *testing.T){
+				// tests will pass 
+				require.EqualValues(t, 12, 12.0, "比较 int32, float64")
+				require.EqualValues(t, 12, int64(12), "比较 int32, int64")
+				
+				// tests will fail 
+				require.Equal(t, 12, 12.0, "比较 int32，float64")
+				require.Equal(t, 12, int64(12), "比较 int32，int64")
+				
+				
+    
+	mockery 
+	
+	    mockery与Go指令(directive)结合使用，我们可以为 interface 快速创建对应的mock
+	struct。即便没有具体实现，也可以被其他包调用。我们通过LazyCache的例子来看它的使用
+	方法。
+	    假设有一个第三方服务，我们把它封装在 thirdpartyapi 包里，并加入 go directive，
+    代码如下：
+	
+	package thirdpartyapi
+	
+	// go:generate mockery -name=Client
+	type Client interface{
+		Get(key string)(data interface{}, err error)
+	}
+	
+	我们在 thirdpartyapi 目录下执行 go generate，在mocks目录下生成对应的mock struct。
+    目录结构如下：
+	   |--thirdpartyapi
+	      |--client.go 
+		  |--mocks 
+		     |--Client.go 
+	   在
+		  }
+		  
+		  func 
+3. 使用 mockery 和 testify/mock 为lazy cache写单元测试。
