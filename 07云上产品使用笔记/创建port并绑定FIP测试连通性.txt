@@ -1,0 +1,94 @@
+创建port并绑定FIP测试连通性
+
+1. 首先找一台测试环境
+
+2. 设置 ~/.bashrc中环境变量 CC_TENANT_ID=“sxw"
+   source ~/.bashrc   
+   
+3. 创建zone
+   ccs zone-create zone-sxw 
+   
+4. 创建VR
+   ccs host-create vr-sxw rack100 VR --mgmt=192.168.100.100  -dv=100.64.100.100 --underlay=100.64.200.200 --zone-sxw
+
+5. 创建hostgroup
+   ccs hostgroup-create vrgroup-sxw --type=VR
+   
+6. 将VR添加到hostgroup中
+   ccs host-adminstatus-modify vr-sxw DOWN
+   ccs add-host-to-hostgroup hg-usm66zhec3 host-6nj96c6bda
+   ccs host-adminstatus-modify vr-sxw UP
+   
+7. 创建VPC，-v选项显示请求数据和响应数据
+   ccs vpc-create vpc-sxw-test --cidr=10.28.0.0/16 --hostgroup-id=hg-usm66zhec3 -v
+
+8. 查询默认route-table, VPC id
+   ccs route-table-list
+   能够在结果中找到之前创建的VPC的id的默认路由表，vpc-sxw-test对应的id为vpc-odj9ox21i2，
+   默认生成的route-table id为rtb-x7lmt5hshh，创建subnet时使用
+   +----------------+------------+----------------+---------+
+   |       Id       |    Name    |     VpcId      |  Type   |
+   +----------------+------------+----------------+---------+
+   | rtb-x7lmt5hshh | 默认路由表 | vpc-odj9ox21i2 | default |
+   +----------------+------------+----------------+---------+
+   
+9. 创建subnet 
+   ccs subnet-create vpc-odj9ox21i2 vpc-sxw-test-subnet1 10.28.1.0/24 --mtu 1450 --route-table rtb-x7lmt5hshh -v
+   创建subnet需要vpc-id、subnet-name、CIDR、mtu(最大传输单元)、默认路由表-id 
+   创建好的subnet-id为：subnet-bth78pyejq，创建port时使用 
+   
+10. 创建一个VS节点
+   ccs host-create vs-sxw rack100 VS --mgmt=100.65.100.100 --underlay=100.65.200.200 --zone=zone-sxw
+   计划在该VS节点上创建port，host-id为host-tpk4gfp5ao，创建port时使用
+   
+11. 查询安全组id
+   +---------------+---------------------------+----------------+---------+
+   |      Id       |           Name            |     VpcId      |  Type   |
+   +---------------+---------------------------+----------------+---------+
+   | sg-qy8o0dn3j8 | 默认安全组开放全部端口    | vpc-odj9ox21i2 | default |
+   | sg-2kw0jhsrss | Windows安全组开放3389端口 | vpc-odj9ox21i2 | default |
+   | sg-32l2k07sda | Linux安全组开放22端口     | vpc-odj9ox21i2 | default |
+   +---------------+---------------------------+----------------+---------+
+   选择我们刚才创建的VPC上对应的安全组，然后选择“默认安全组开放全部端口”的id，即sg-qy8o0dn3j8
+   
+12. 创建port 
+   ccs port-create subnet-bth78pyejq --host-id=host-tpk4gfp5ao --security-groups=sg-qy8o0dn3j8 --type=compute --device-id=device-sxw-test
+   创建port是给虚机创建port，相当于一个网卡，这里device-id用了假的，实际中应该
+   使用真正的虚机的host-id 
+   
+13. 给port配置 namespace
+   /usr/local/bin/cport.sh port-5r3hf3ne6n fa:16:3e:84:bd:61
+   验证：
+   ip netns exec port-5r3hf3ne6n ip addr 
+   -----------------------------------------------------------------------
+   1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+   2: tunl0@NONE: <NOARP> mtu 1480 qdisc noop state DOWN 
+    link/ipip 0.0.0.0 brd 0.0.0.0
+   22: veth3hf3ne6n@if21: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether fa:16:3e:84:bd:61 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet6 fe80::f816:3eff:fe84:bd61/64 scope link 
+       valid_lft forever preferred_lft forever
+   -----------------------------------------------------------------------
+   运行成功会生成一个与port同名的namespace
+   
+14. 修改port的状态为UP
+   ccs port-up port-5r3hf3ne6n
+   
+15. 重启DHCP
+    重启之后，再运行 ip netns exec port-5r3hf3ne6n ip addr 将发现port拥有了ip地址
+	
+16. 创建floating IP（公网IP）
+    ccs floatingip-create BGP --name floating-ip-sxw-test
+	floating-ip的id为 fip-j9slzey29g，绑定port时使用
+	
+17. FIP绑定port
+    ccs floatingip-associate fip-j9slzey29g port-5r3hf3ne6n -v
+	
+18. 测试连通性
+    ip netns exec port-5r3hf3ne6n ping baidu.com 
+   

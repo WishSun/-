@@ -1,0 +1,28 @@
+tcpdump的安装和使用
+
+      1. 安装tcpdump
+	     yum install tcpdump 
+		 
+	  2. tcpdump常用命令
+	     (1). tcpdump -n -i eth0 
+		      -n : 不解析ip，默认会将ip解析成域名（该ip指的是发送端自己的ip）
+		      -i : 指定网卡接口 
+			  命令含义：抓取网卡接口eth0上的数据包
+			  
+		 (2). tcpdump -n -i eth0 host baidu.com
+		      host : 指定主机
+			  命令含义：抓取与主机baidu.com交互的数据包
+			  
+		 (3). tcpdump -n -i eth0 host baidu.com and port 80
+		      port : 指定端口
+			  命令含义：抓取与主机baidu.com在80端口交互的数据包
+			  
+		 (4). tcpdump -n -i eth0 -c 10 
+		      -c : 指定抓多少个包停止
+			  命令含义：在eth0口上抓10个包
+			  
+		 (5). tcpdump -n -i eth0 -c 10 -w my-packets.pacp
+		      -w : 吧抓到的数据存入文件供以后分析 
+			  命令含义：将从eth0抓到的10个数据包转存到文件my-packets.pacp中
+			  注意：my-packets.pcap是一种特殊的文件，无法直接用vim查看，可以将该文件放到
+			        windows下，使用wireshark查看。
